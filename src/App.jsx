@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
@@ -15,7 +15,15 @@ const data = [
 ];
 
 function App() {
-  const [names, setNames] = useState(data);
+  const [names, setNames] = useState(() => {
+    const saved = localStorage.getItem("contacts");
+    return saved ? JSON.parse(saved) : data;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("contacts", JSON.stringify(names));
+  }, [names]);
+
   const [inputValue, setInputValue] = useState("");
   const [debounceInputValue] = useDebounce(inputValue, 500);
 
@@ -25,14 +33,27 @@ function App() {
     );
   }, [debounceInputValue, names]);
 
+  const addNewUser = (newUsers) => {
+    setNames((prevUsers) => {
+      return [...prevUsers, ...newUsers];
+    });
+  };
+
+  const deleteUser = (userId) => {
+    setNames((prevTasks) => {
+      return prevTasks.filter((user) => user.id !== userId);
+    });
+  };
+
   return (
     <div className="container">
-      <ContactForm />
+      <ContactForm onSubmit={addNewUser} />
       <SearchBox inputValue={inputValue} setInputValue={setInputValue} />
       <ContactList
         data={visibleNames}
         text={inputValue}
         onChange={setInputValue}
+        onDelete={deleteUser}
       />
     </div>
   );
